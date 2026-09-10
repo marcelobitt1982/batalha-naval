@@ -10,12 +10,12 @@
 <style>
 :root {
   --bg-deep: #030712;
-  --panel-bg: rgba(10, 18, 38, 0.75);
+  --panel-bg: rgba(10, 18, 38, 0.85);
   --cyan-glow: #00f0ff;
   --blue-neon: #1d77ff;
   --red-neon: #ff0055;
-  --grid-line: rgba(0, 240, 255, 0.15);
-  --cell-water: rgba(9, 29, 59, 0.6);
+  --grid-line: rgba(0, 240, 255, 0.2);
+  --cell-water: rgba(9, 29, 59, 0.55);
   --text-primary: #e2f1ff;
   --text-dim: #6482a6;
 }
@@ -77,7 +77,7 @@ h1 {
 
 .sub {
   color: var(--text-dim);
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: 1.5px;
   margin-top: 6px;
   text-transform: uppercase;
@@ -87,11 +87,10 @@ h1 {
 .panel {
   background: var(--panel-bg);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(0, 240, 255, 0.25);
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 240, 255, 0.05);
-  position: relative;
 }
 
 .top {
@@ -133,7 +132,7 @@ button.active {
 }
 
 .status-bar {
-  background: rgba(4, 12, 26, 0.8);
+  background: rgba(4, 12, 26, 0.85);
   border: 1px solid rgba(0, 240, 255, 0.2);
   border-radius: 10px;
   padding: 12px 20px;
@@ -167,9 +166,6 @@ button.active {
   font-size: 16px;
   margin: 0 0 16px 0;
   letter-spacing: 2px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .boardbox.player h2 { color: var(--cyan-glow); }
@@ -211,10 +207,17 @@ button.active {
   justify-content: center;
 }
 
-.grid {
+.board-wrapper {
   grid-column: 2;
   grid-row: 2;
+  position: relative;
+  width: 100%;
   aspect-ratio: 1;
+}
+
+.grid {
+  width: 100%;
+  height: 100%;
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 3px;
@@ -227,7 +230,7 @@ button.active {
   overflow: hidden;
 }
 
-/* Efeito de radar em segundo plano no tabuleiro */
+/* Efeito de radar em segundo plano */
 .grid::after {
   content: "";
   position: absolute;
@@ -240,6 +243,14 @@ button.active {
 @keyframes radar {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Camada onde os barcos desenhados são posicionados */
+.ships-overlay {
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .cell {
@@ -260,18 +271,10 @@ button.active {
   z-index: 3;
 }
 
-.cell.ship {
-  background: rgba(100, 130, 166, 0.5);
-  border-color: #8daed4;
-  box-shadow: inset 0 0 8px rgba(255,255,255,0.2);
-}
-
 /* Acerto / Naufrágio */
 .cell.hit {
-  background: radial-gradient(circle, #ff5500 0%, #a80024 100%);
+  background: rgba(255, 0, 85, 0.25);
   border-color: var(--red-neon);
-  box-shadow: 0 0 12px rgba(255, 0, 85, 0.8);
-  animation: pulse-hit 1.5s infinite alternate;
 }
 
 .cell.hit::after {
@@ -284,11 +287,6 @@ button.active {
 }
 
 /* Erro / Água */
-.cell.miss {
-  background: rgba(13, 40, 71, 0.4);
-  border-color: rgba(0, 240, 255, 0.2);
-}
-
 .cell.miss::after {
   content: "";
   position: absolute;
@@ -302,46 +300,20 @@ button.active {
   box-shadow: 0 0 8px var(--cyan-glow);
 }
 
-@keyframes pulse-hit {
-  0% { box-shadow: 0 0 6px rgba(255, 0, 85, 0.6); }
-  100% { box-shadow: 0 0 16px rgba(255, 0, 85, 1); }
-}
-
-.legend {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-  font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 600;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+/* Renderização dos barcos no overlay */
+.rendered-ship {
+  position: absolute;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
 }
 
 .stats {
   display: flex;
   justify-content: center;
   gap: 40px;
-  margin-top: 18px;
+  margin-top: 20px;
   font-family: 'Orbitron', sans-serif;
   font-size: 15px;
-}
-
-.stats span {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .stats b {
@@ -374,7 +346,7 @@ button.active {
       <button id="hardBtn" class="active">IA Tática</button>
     </div>
 
-    <div id="status" class="status-bar">Aguardando comando... Clique em uma coordenada do mapa inimigo.</div>
+    <div id="status" class="status-bar">Inicializando radares... Clique em uma coordenada inimiga.</div>
 
     <div class="boards">
       <section class="boardbox player">
@@ -383,7 +355,10 @@ button.active {
           <div></div>
           <div class="labels-top" id="p-labels-top"></div>
           <div class="labels-left" id="p-labels-left"></div>
-          <div id="player" class="grid"></div>
+          <div class="board-wrapper">
+            <div id="p-overlay" class="ships-overlay"></div>
+            <div id="player" class="grid"></div>
+          </div>
         </div>
       </section>
 
@@ -393,7 +368,10 @@ button.active {
           <div></div>
           <div class="labels-top" id="e-labels-top"></div>
           <div class="labels-left" id="e-labels-left"></div>
-          <div id="enemy" class="grid"></div>
+          <div class="board-wrapper">
+            <div id="e-overlay" class="ships-overlay"></div>
+            <div id="enemy" class="grid"></div>
+          </div>
         </div>
       </section>
     </div>
@@ -402,27 +380,27 @@ button.active {
       <span>SEUS NAVIOS: <b id="pShips" style="color: var(--cyan-glow);">5</b></span>
       <span>NAVIOS IA: <b id="eShips" style="color: var(--red-neon);">5</b></span>
     </div>
-
-    <div class="legend">
-      <div class="legend-item"><i class="dot" style="background: rgba(100, 130, 166, 0.8);"></i> Navio Intacto</div>
-      <div class="legend-item"><i class="dot" style="background: var(--red-neon);"></i> Fogo / Atingido</div>
-      <div class="legend-item"><i class="dot" style="background: var(--cyan-glow);"></i> Água / Disparo Errado</div>
-    </div>
   </div>
 </div>
 
 <script>
 const N = 10;
-const fleet = [5, 4, 3, 3, 2];
 const cols = ["A","B","C","D","E","F","G","H","I","J"];
 
-let P, E, turn = true, over = false, mode = "hard", targetQueue = [], lastHit = null;
+const shipTypes = [
+  { id: 'carrier', len: 5, name: 'Porta-Aviões' },
+  { id: 'battleship', len: 4, name: 'Encouraçado' },
+  { id: 'cruiser', len: 3, name: 'Cruzador' },
+  { id: 'submarine', len: 3, name: 'Submarino' },
+  { id: 'destroyer', len: 2, name: 'Patrulha' }
+];
 
-const playerEl = document.getElementById("player");
-const enemyEl = document.getElementById("enemy");
+let P, E, pShipsData = [], eShipsData = [], turn = true, over = false, mode = "hard", targetQueue = [];
+
+const playerEl = document.getElementById("player"), enemyEl = document.getElementById("enemy");
+const pOverlay = document.getElementById("p-overlay"), eOverlay = document.getElementById("e-overlay");
 const statusEl = document.getElementById("status");
 
-// Inicializar Coordenadas
 function setupLabels() {
   const setup = (topId, leftId) => {
     const top = document.getElementById(topId);
@@ -435,10 +413,21 @@ function setupLabels() {
   setup("e-labels-top", "e-labels-left");
 }
 
+function getShipSVG(type) {
+  const SVGs = {
+    carrier: `<svg viewBox="0 0 500 100" width="100%" height="100%"><path d="M10,20 L430,10 L490,50 L430,90 L10,80 Z" fill="#4a5568" stroke="#cbd5e1" stroke-width="4"/><rect x="40" y="25" width="360" height="50" fill="#334155" stroke="#94a3b8" stroke-width="2"/><line x1="50" y1="50" x2="380" y2="50" stroke="#f1f5f9" stroke-width="3" stroke-dasharray="12,12"/><polygon points="120,30 135,45 110,45" fill="#00f0ff"/><polygon points="220,30 235,45 210,45" fill="#00f0ff"/><polygon points="160,58 175,73 150,73" fill="#00f0ff"/><circle cx="440" cy="50" r="12" fill="#64748b"/></svg>`,
+    battleship: `<svg viewBox="0 0 400 100" width="100%" height="100%"><path d="M5,50 Q40,20 100,20 L320,25 Q380,35 395,50 Q380,65 320,75 L100,80 Q40,80 5,50 Z" fill="#52606d" stroke="#cbd5e1" stroke-width="4"/><circle cx="90" cy="50" r="14" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/><circle cx="160" cy="50" r="16" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/><rect x="210" y="35" width="60" height="30" rx="5" fill="#334155" stroke="#cbd5e1"/><circle cx="310" cy="50" r="14" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/></svg>`,
+    cruiser: `<svg viewBox="0 0 300 100" width="100%" height="100%"><path d="M10,50 Q50,25 120,25 L240,30 Q290,40 295,50 Q290,60 240,70 L120,75 Q50,75 10,50 Z" fill="#475569" stroke="#94a3b8" stroke-width="4"/><circle cx="80" cy="50" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/><rect x="130" y="38" width="45" height="24" fill="#1e293b"/><circle cx="210" cy="50" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/></svg>`,
+    submarine: `<svg viewBox="0 0 300 100" width="100%" height="100%"><path d="M20,50 Q50,30 150,30 Q250,30 285,50 Q250,70 150,70 Q50,70 20,50 Z" fill="#334155" stroke="#64748b" stroke-width="4"/><rect x="120" y="38" width="50" height="24" rx="12" fill="#0f172a" stroke="#94a3b8" stroke-width="2"/><circle cx="60" cy="50" r="6" fill="#00f0ff"/><circle cx="240" cy="50" r="6" fill="#00f0ff"/></svg>`,
+    destroyer: `<svg viewBox="0 0 200 100" width="100%" height="100%"><path d="M10,50 Q40,30 100,30 L160,35 Q195,45 198,50 Q195,55 160,65 L100,70 Q40,70 10,50 Z" fill="#64748b" stroke="#cbd5e1" stroke-width="3"/><circle cx="60" cy="50" r="10" fill="#1e293b"/><rect x="100" y="40" width="30" height="20" fill="#334155"/></svg>`
+  };
+  return SVGs[type] || '';
+}
+
 function empty(){ return Array.from({length:N}, ()=>Array(N).fill(0)); }
 
 function canPlace(b, r, c, len, hor) {
-  for(let k=0; k<len; k++){
+  for(let k=0; k<len; k++) {
     let y = r + (hor ? 0 : k), x = c + (hor ? k : 0);
     if(y >= N || x >= N || b[y][x]) return false;
   }
@@ -449,76 +438,105 @@ function canPlace(b, r, c, len, hor) {
 }
 
 function placeFleet(b) {
-  for(const len of fleet) {
+  let shipsData = [];
+  for(const ship of shipTypes) {
     let ok = false;
     while(!ok) {
       let hor = Math.random() < 0.5, r = Math.floor(Math.random()*N), c = Math.floor(Math.random()*N);
-      if(canPlace(b, r, c, len, hor)) {
-        for(let k=0; k<len; k++) {
+      if(canPlace(b, r, c, ship.len, hor)) {
+        for(let k=0; k<ship.len; k++) {
           let y = r + (hor ? 0 : k), x = c + (hor ? k : 0);
           b[y][x] = 1;
         }
+        shipsData.push({ ...ship, r, c, hor, sunk: false });
         ok = true;
       }
     }
   }
+  return shipsData;
 }
 
 function reset() {
   P = empty(); E = empty();
-  placeFleet(P); placeFleet(E);
-  turn = true; over = false; targetQueue = []; lastHit = null;
+  pShipsData = placeFleet(P);
+  eShipsData = placeFleet(E);
+  turn = true; over = false; targetQueue = [];
   render();
   statusEl.textContent = "Sua vez! Selecione um alvo nas coordenadas inimigas.";
 }
 
 function render() {
-  draw(playerEl, P, true);
-  draw(enemyEl, E, false);
-  document.getElementById("pShips").textContent = countShips(P);
-  document.getElementById("eShips").textContent = countShips(E);
+  drawGrid(playerEl, P, true);
+  drawGrid(enemyEl, E, false);
+  renderOverlay(pOverlay, pShipsData, true);
+  renderOverlay(eOverlay, eShipsData, false);
+  document.getElementById("pShips").textContent = pShipsData.filter(s => !s.sunk).length;
+  document.getElementById("eShips").textContent = eShipsData.filter(s => !s.sunk).length;
 }
 
-function draw(el, b, isPlayer) {
+function drawGrid(el, b, isPlayer) {
   el.innerHTML = "";
   for(let r=0; r<N; r++) {
     for(let c=0; c<N; c++) {
       const d = document.createElement("div");
       d.className = "cell";
       const v = b[r][c];
-      if(v === 1 && isPlayer) d.classList.add("ship");
       if(v === 2) d.classList.add("miss");
       if(v === 3) d.classList.add("hit");
-      if(!isPlayer) {
-        d.dataset.r = r; d.dataset.c = c;
-        d.onclick = () => attackPlayer(r, c);
-      }
+      if(!isPlayer) d.onclick = () => attackPlayer(r, c);
       el.appendChild(d);
     }
   }
 }
 
-function countShips(b) {
-  let seen = Array.from({length:N}, () => Array(N).fill(false)), n = 0;
-  for(let r=0; r<N; r++) for(let c=0; c<N; c++) if(b[r][c] === 1 && !seen[r][c]) {
-    n++;
-    let q = [[r,c]]; seen[r][c] = true;
-    while(q.length) {
-      let [y,x] = q.pop();
-      for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        let a = y+dy, z = x+dx;
-        if(a>=0 && a<N && z>=0 && z<N && !seen[a][z] && b[a][z] === 1) {
-          seen[a][z] = true; q.push([a,z]);
-        }
-      }
+function renderOverlay(overlayEl, shipsData, isPlayer) {
+  overlayEl.innerHTML = "";
+  const step = 10;
+  
+  shipsData.forEach(s => {
+    // Navios inimigos só aparecem quando totalmente afundados
+    if(!isPlayer && !s.sunk) return;
+
+    const shipDiv = document.createElement("div");
+    shipDiv.className = "rendered-ship";
+    shipDiv.innerHTML = getShipSVG(s.id);
+
+    const width = s.hor ? s.len * step : step;
+    const height = s.hor ? step : s.len * step;
+    
+    shipDiv.style.width = `${width}%`;
+    shipDiv.style.height = `${height}%`;
+    shipDiv.style.left = `${s.c * step}%`;
+    shipDiv.style.top = `${s.r * step}%`;
+    
+    if(!s.hor) {
+      shipDiv.style.transformOrigin = "top left";
+      shipDiv.style.transform = `rotate(90deg) translateY(-100%)`;
+      shipDiv.style.width = `${s.len * step}%`;
+      shipDiv.style.height = `${step}%`;
     }
-  }
-  return n;
+
+    if(s.sunk) shipDiv.style.filter = "grayscale(100%) drop-shadow(0 0 8px #ff0055)";
+
+    overlayEl.appendChild(shipDiv);
+  });
+}
+
+function updateSunkState(b, shipsData) {
+  shipsData.forEach(s => {
+    let hits = 0;
+    for(let k=0; k<s.len; k++) {
+      let y = s.r + (s.hor ? 0 : k), x = s.c + (s.hor ? k : 0);
+      if(b[y][x] === 3) hits++;
+    }
+    if(hits === s.len) s.sunk = true;
+  });
 }
 
 function attackPlayer(r, c) {
   if(over || !turn || E[r][c] >= 2) return;
   E[r][c] = E[r][c] === 1 ? 3 : 2;
+  updateSunkState(E, eShipsData);
   const posStr = `${cols[c]}${r+1}`;
   
   if(E[r][c] === 3) {
@@ -548,14 +566,14 @@ function aiTurn() {
   const posStr = `${cols[c]}${r+1}`;
 
   if(P[r][c] === 1) {
-    P[r][c] = 3; lastHit = [r,c];
+    P[r][c] = 3;
     if(mode === "hard") {
       for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1]]) {
         let y = r+dy, x = c+dx;
         if(y>=0 && y<N && x>=0 && x<N && P[y][x] < 2) targetQueue.push([y,x]);
       }
-      targetQueue = targetQueue.filter((a,i,self) => i === self.findIndex(b => b[0]===a[0] && b[1]===a[1]));
     }
+    updateSunkState(P, pShipsData);
     statusEl.textContent = `⚠️ ALERTA: A IA atingiu sua frota em ${posStr}! Ela joga novamente.`;
     render(); checkEnd();
     if(!over) setTimeout(aiTurn, 600);
