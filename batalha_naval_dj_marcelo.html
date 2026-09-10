@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Batalha Naval — DJ MARCELO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#18264a 0,#080d1d 45%,#03050b 100%);color:#eef5ff;font-family:Arial,Helvetica,sans-serif;display:flex;justify-content:center;padding:22px}
+.wrap{width:min(1100px,100%)}
+header{text-align:center;margin-bottom:18px}
+h1{margin:0;font-size:clamp(30px,5vw,52px);letter-spacing:2px;text-shadow:0 0 18px #42a5ff}
+.sub{color:#91a9c9;margin-top:6px}
+.panel{background:rgba(10,18,38,.88);border:1px solid #29436c;border-radius:18px;padding:18px;box-shadow:0 18px 50px #0008}
+.top{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:15px}
+button{border:1px solid #3b6fa8;background:#122744;color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:bold}
+button:hover{background:#1b3b68}
+button.active{background:#1674d1;box-shadow:0 0 14px #1674d188}
+.status{text-align:center;min-height:25px;color:#bfe0ff;font-weight:bold;margin:8px}
+.boards{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.boardbox h2{text-align:center;font-size:18px;margin:8px 0 10px}
+.grid{width:min(440px,100%);aspect-ratio:1;margin:auto;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;background:#06101f;padding:4px;border-radius:10px}
+.cell{position:relative;border:1px solid #1d4165;background:#0b2843;border-radius:3px;cursor:pointer;transition:.12s}
+.cell:hover{filter:brightness(1.35);transform:scale(1.03)}
+.cell.ship{background:#56677c;border-color:#8499ad}
+.cell.hit{background:linear-gradient(145deg,#bfc9d4,#68798b);border-color:#f2f6fa;box-shadow:inset 0 0 8px #ffffff55,0 0 6px #ff4d4d66}
+.cell.miss{background:#1b5078;border-color:#62aee0}
+.cell.hit::after{content:"";position:absolute;left:10%;right:10%;top:32%;height:36%;border-radius:45% 45% 25% 25%;background:linear-gradient(#e9edf1 0 28%,#7f8c99 29% 70%,#424c57 71%);box-shadow:0 2px 3px #0009;transform:skewX(-4deg)}
+.cell.hit::before{content:"";position:absolute;z-index:2;left:38%;top:9%;width:24%;height:35%;background:#26323d;border-radius:2px;box-shadow:0 0 0 1px #dce5ed88}
+.cell.miss::after{content:"•";position:absolute;inset:0;display:grid;place-items:center;color:#8ed4ff;font-size:25px}
+.legend{display:flex;justify-content:center;gap:15px;margin:12px 0 0;font-size:12px;color:#a9bdd7}
+.dot{width:13px;height:13px;border-radius:3px;display:inline-block;vertical-align:-2px;margin-right:4px}
+.stats{display:flex;justify-content:center;gap:25px;margin:18px 0 5px;color:#a9c3e5}
+@media(max-width:760px){.boards{grid-template-columns:1fr}.panel{padding:12px}body{padding:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>⚓ DJ MARCELO — BATALHA NAVAL</h1>
+<div class="sub">Você contra a IA • Descubra e destrua todos os barcos</div>
+</header>
+<div class="panel">
+<div class="top">
+<button id="newBtn">🎮 Novo jogo</button>
+<button id="easyBtn">IA Fácil</button>
+<button id="hardBtn" class="active">IA Inteligente</button>
+</div>
+<div id="status" class="status">Clique em uma casa do tabuleiro da IA para começar.</div>
+<div class="boards">
+<section class="boardbox"><h2>🟦 SEU OCEANO</h2><div id="player" class="grid"></div></section>
+<section class="boardbox"><h2>🟥 OCEANO DA IA</h2><div id="enemy" class="grid"></div></section>
+</div>
+<div class="stats"><span>Seus navios: <b id="pShips">5</b></span><span>Navios IA: <b id="eShips">5</b></span></div>
+<div class="legend">
+<span><i class="dot" style="background:#56677c"></i>Navio</span>
+<span><i class="dot" style="background:#8796a5"></i>Parte do barco</span>
+<span><i class="dot" style="background:#1b5078"></i>Água</span>
+</div>
+</div>
+</div>
+<script>
+const N=10;
+const fleet=[5,4,3,3,2];
+let P,E,turn=true,over=false,mode="hard",targetQueue=[],lastHit=null;
+
+const playerEl=document.getElementById("player"), enemyEl=document.getElementById("enemy");
+const statusEl=document.getElementById("status");
+
+function empty(){return Array.from({length:N},()=>Array(N).fill(0))}
+function canPlace(b,r,c,len,hor){
+  for(let k=0;k<len;k++){let y=r+(hor?0:k),x=c+(hor?k:0);if(y>=N||x>=N||b[y][x])return false}
+  for(let y=Math.max(0,r-1);y<=Math.min(N-1,r+(hor?1:len));y++)
+    for(let x=Math.max(0,c-1);x<=Math.min(N-1,c+(hor?len:1));x++)
+      if(b[y][x])return false;
+  return true
+}
+function placeFleet(b){
+  for(const len of fleet){
+    let ok=false;
+    while(!ok){
+      let hor=Math.random()<.5,r=Math.floor(Math.random()*N),c=Math.floor(Math.random()*N);
+      if(canPlace(b,r,c,len,hor)){
+        for(let k=0;k<len;k++){let y=r+(hor?0:k),x=c+(hor?k:0);b[y][x]=1}
+        ok=true;
+      }
+    }
+  }
+}
+function reset(){
+  P=empty();E=empty();placeFleet(P);placeFleet(E);
+  turn=true;over=false;targetQueue=[];lastHit=null;render();
+  statusEl.textContent="Sua vez! Ataque uma casa azul do tabuleiro da IA.";
+}
+function render(){
+  draw(playerEl,P,true);draw(enemyEl,E,false);
+  document.getElementById("pShips").textContent=countShips(P);
+  document.getElementById("eShips").textContent=countShips(E);
+}
+function draw(el,b,isPlayer){
+  el.innerHTML="";
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const d=document.createElement("div");d.className="cell";
+    const v=b[r][c];
+    if(v===1 && isPlayer)d.classList.add("ship");
+    if(v===2)d.classList.add("miss");
+    if(v===3)d.classList.add("hit");
+    if(!isPlayer)d.dataset.r=r,d.dataset.c=c,d.onclick=()=>attackPlayer(r,c);
+    el.appendChild(d);
+  }
+}
+function countShips(b){
+  // approximate by connected components of remaining/occupied ship cells
+  let seen=Array.from({length:N},()=>Array(N).fill(false)),n=0;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(b[r][c]===1&&!seen[r][c]){
+    n++;let q=[[r,c]];seen[r][c]=1;
+    while(q.length){let [y,x]=q.pop();for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      let a=y+dy,z=x+dx;if(a>=0&&a<N&&z>=0&&z<N&&!seen[a][z]&&b[a][z]===1){seen[a][z]=1;q.push([a,z])}
+    }}
+  }
+  return n;
+}
+function attackPlayer(r,c){
+  if(over||!turn||E[r][c]>=2)return;
+  E[r][c]=E[r][c]===1?3:2;
+  if(E[r][c]===3){statusEl.textContent="🚢 Acertou uma parte do barco! Você joga novamente.";render();checkEnd();return}
+  turn=false;render();statusEl.textContent="🌊 Água! A IA está pensando...";
+  setTimeout(aiTurn,450);
+  checkEnd();
+}
+function aiTurn(){
+  if(over)return;
+  let r,c;
+  if(mode==="hard" && targetQueue.length){
+    [r,c]=targetQueue.shift();
+    if(P[r][c]>=2){aiTurn();return}
+  }else{
+    do{r=Math.floor(Math.random()*N);c=Math.floor(Math.random()*N)}while(P[r][c]>=2);
+  }
+  if(P[r][c]===1){
+    P[r][c]=3;lastHit=[r,c];
+    if(mode==="hard"){
+      for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1]]){
+        let y=r+dy,x=c+dx;
+        if(y>=0&&y<N&&x>=0&&x<N&&P[y][x]<2)targetQueue.push([y,x]);
+      }
+      // remove duplicates
+      targetQueue=targetQueue.filter((a,i,self)=>i===self.findIndex(b=>b[0]===a[0]&&b[1]===a[1]));
+    }
+    statusEl.textContent="🚢 A IA acertou uma parte do seu barco! Ela joga novamente.";
+    render();checkEnd();
+    if(!over)setTimeout(aiTurn,430);
+  }else{
+    P[r][c]=2;turn=true;render();statusEl.textContent="🌊 A IA errou. Sua vez!";
+    checkEnd();
+  }
+}
+function checkEnd(){
+  if(!P.flat().includes(1)){over=true;statusEl.textContent="☠️ A IA venceu! Clique em Novo jogo para tentar novamente.";render()}
+  else if(!E.flat().includes(1)){over=true;statusEl.textContent="🏆 VOCÊ VENCEU! DJ MARCELO DOMINOU O OCEANO!";render()}
+}
+document.getElementById("newBtn").onclick=reset;
+document.getElementById("easyBtn").onclick=()=>{mode="easy";document.getElementById("easyBtn").classList.add("active");document.getElementById("hardBtn").classList.remove("active");reset()};
+document.getElementById("hardBtn").onclick=()=>{mode="hard";document.getElementById("hardBtn").classList.add("active");document.getElementById("easyBtn").classList.remove("active");reset()};
+reset();
+</script>
+</body>
+</html>
