@@ -1,21 +1,23 @@
-<!DOCTYPE html>
+[source: 1]<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CYBER-SOKOBAN 2077 — 16-BIT EDITION</title>
+<title>BATALHA DO DJ MARCELO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #030712;
-  --panel: #0b1329;
-  --wall: #1e293b;
-  --cyan: #00f0ff;
-  --magenta: #ff007f;
-  --green: #10b981;
-  --yellow: #facc15;
-  --text: #f8fafc;
+  --bg-deep: #030712;
+  --panel-bg: rgba(10, 18, 38, 0.85);
+  --cyan-glow: #00f0ff;
+  --blue-neon: #1d77ff;
+  --red-neon: #ff0055;
+  --grid-line: rgba(0, 240, 255, 0.2);
+  --cell-water: rgba(9, 29, 59, 0.55);
+  --text-primary: #e2f1ff;
+  --text-dim: #6482a6;
 }
 
 * {
@@ -26,604 +28,787 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 50% 30%, #111827 0%, var(--bg) 100%);
-  color: var(--text);
+  background: radial-gradient(circle at 50% 20%, #0c1c38 0%, #050b18 50%, var(--bg-deep) 100%);
+  color: var(--text-primary);
   font-family: 'Rajdhani', sans-serif;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: 10px;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: 
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  width: min(1100px, 100%);
+  max-height: 98vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 header {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 h1 {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: clamp(16px, 3vw, 26px);
+  font-size: clamp(20px, 3vw, 32px);
   font-weight: 900;
-  background: linear-gradient(90deg, var(--yellow) 20%, var(--green) 100%);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #ffffff 0%, var(--cyan-glow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+  text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
 }
 
-.hud {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel);
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  padding: 8px 14px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  font-family: 'Orbitron', sans-serif;
+.sub {
+  color: var(--text-dim);
   font-size: 13px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  letter-spacing: 1px;
+  margin-top: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
-.hud input[type=number] {
-  width: 75px;
-  background: var(--bg);
-  border: 1px solid var(--cyan);
-  color: #fff;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: bold;
-  text-align: center;
-  font-family: 'Orbitron', sans-serif;
+.panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.05);
 }
 
-.controls-top {
+.top {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(4, 12, 26, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.audio-controls label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: var(--cyan-glow);
+}
+
+.audio-controls input[type=range] {
+  accent-color: var(--cyan-glow);
+  cursor: pointer;
+  width: 70px;
 }
 
 button {
   font-family: 'Orbitron', sans-serif;
-  border: 1px solid var(--cyan);
-  background: var(--panel);
-  color: #fff;
-  padding: 6px 12px;
+  border: 1px solid var(--blue-neon);
+  background: rgba(18, 39, 68, 0.6);
+  color: var(--text-primary);
+  padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 11px;
   font-weight: 700;
-  transition: all 0.2s;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 button:hover {
-  background: var(--cyan);
-  color: #000;
-  box-shadow: 0 0 10px var(--cyan);
-}
-
-button.audio-btn {
-  border-color: var(--magenta);
-  color: var(--magenta);
-}
-
-button.audio-btn.active {
-  background: var(--magenta);
+  background: var(--blue-neon);
   color: #fff;
-  box-shadow: 0 0 12px var(--magenta);
+  box-shadow: 0 0 12px rgba(29, 119, 255, 0.6);
+  transform: translateY(-1px);
 }
 
-#viewport {
-  max-width: 95vw;
-  max-height: 65vh;
-  overflow: auto;
-  border: 2px solid rgba(0, 240, 255, 0.4);
+button.active {
+  background: var(--cyan-glow);
+  color: #030712;
+  border-color: var(--cyan-glow);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+}
+
+button.music-btn {
+  border-color: var(--cyan-glow);
+  background: rgba(0, 240, 255, 0.1);
+}
+
+.status-bar {
+  background: rgba(4, 12, 26, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.2);
   border-radius: 8px;
-  background: #020617;
-  padding: 4px;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
-}
-
-#game-container {
-  display: grid;
-  gap: 1px;
-}
-
-.cell {
-  width: 36px;
-  height: 36px;
+  padding: 8px 14px;
+  text-align: center;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
-  position: relative;
-  font-size: 18px;
+  color: var(--cyan-glow);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  margin-bottom: 14px;
 }
 
-/* Visual Cyberpunk */
-.wall { 
-  background: #1e293b; 
-  border: 1px solid #334155;
-  box-shadow: inset 0 0 5px #000;
-}
-.floor { background: #050b14; }
-.target { background: #050b14; }
-.target::after {
-  content: "✖";
-  color: var(--yellow);
-  font-size: 18px;
-  font-weight: bold;
-  text-shadow: 0 0 8px var(--yellow);
-}
-
-.box {
-  background: #854d0e;
-  border: 2px solid var(--yellow);
-  border-radius: 4px;
-  box-shadow: 0 0 6px rgba(250, 204, 21, 0.3);
-}
-.box::before { content: "📦"; font-size: 18px; }
-
-.box-ok {
-  background: #065f46;
-  border: 2px solid var(--green);
-  box-shadow: 0 0 10px var(--green);
-}
-.box-ok::before { content: "⚡"; font-size: 18px; }
-
-.player {
-  background: #050b14;
-}
-
-.player::before {
-  content: "";
-  width: 24px;
-  height: 28px;
-  display: block;
-  background: 
-    linear-gradient(#6b3e2e, #6b3e2e) 6px 0px / 12px 6px,
-    linear-gradient(#fca5a5, #fca5a5) 6px 6px / 12px 6px,
-    linear-gradient(#000, #000) 8px 8px / 2px 2px,
-    linear-gradient(#000, #000) 14px 8px / 2px 2px,
-    linear-gradient(#eab308, #eab308) 4px 12px / 16px 8px,
-    linear-gradient(#fca5a5, #fca5a5) 2px 14px / 2px 4px,
-    linear-gradient(#fca5a5, #fca5a5) 20px 14px / 2px 4px,
-    linear-gradient(#22c55e, #22c55e) 6px 20px / 12px 8px,
-    linear-gradient(#050b14, #050b14) 11px 24px / 2px 4px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 4px var(--cyan));
-}
-
-.dpad {
+.boards {
   display: grid;
-  grid-template-columns: repeat(3, 46px);
-  grid-template-rows: repeat(3, 46px);
-  gap: 6px;
-  margin-top: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
-.dpad button {
-  width: 46px;
-  height: 46px;
-  font-size: 16px;
-  padding: 0;
+.boardbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.boardbox h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  margin: 0 0 10px 0;
+  letter-spacing: 1.5px;
+}
+
+.boardbox.player h2 { color: var(--cyan-glow); }
+.boardbox.enemy h2 { color: var(--red-neon); }
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  grid-template-rows: 20px 1fr;
+  gap: 2px;
+  width: min(360px, 100%);
+}
+
+.labels-top {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 20px;
+}
+
+.labels-left {
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(10, 1fr);
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.labels-left span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-wrapper {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  background: rgba(3, 10, 22, 0.9);
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--grid-line);
+  position: relative;
+  overflow: hidden;
+}
+
+.grid::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, transparent 0deg 300deg, rgba(0, 240, 255, 0.08) 360deg);
+  animation: radar 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes radar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ships-overlay {
+  position: absolute;
+  inset: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cell {
+  position: relative;
+  background: var(--cell-water);
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 2;
+}
+
+.enemy .cell:hover {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: var(--cyan-glow);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+  transform: scale(1.05);
+  z-index: 3;
+}
+
+.cell.hit {
+  background: rgba(255, 0, 85, 0.25);
+  border-color: var(--red-neon);
+}
+
+.cell.hit::after {
+  content: "💥";
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
+  font-size: clamp(8px, 1.5vw, 14px);
+}
+
+.cell.miss::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--cyan-glow);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px var(--cyan-glow);
+}
+
+.rendered-ship {
+  position: absolute;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+}
+
+.stats b {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+@media(max-width: 820px){
+  .boards { grid-template-columns: 1fr; gap: 16px; }
+  .panel { padding: 12px; }
+  body { padding: 5px; }
 }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>SOKOBAN</h1>
-  <h1>Marcelo Bittencourt</h1>
-</header>
+<div class="wrap">
+  <header>
+    <h1>⚓ BATALHA DO DJ MARCELO </h1>
+    <div class="sub">Tática de Combate Naval • AI vs Player</div>
+  </header>
 
-<div class="hud">
-  <span>FASE: <input type="number" id="level-input" min="1" max="10000" value="1"> / 10000</span>
-  <span>PASSOS: <b id="steps-display" style="color:var(--cyan)">0</b></span>
-</div>
+  <div class="panel">
+    <div class="top">
+      <button id="newBtn">🎮 Novo Jogo</button>
+      <button id="easyBtn">IA Fácil</button>
+      <button id="hardBtn" class="active">IA Tática</button>
+      
+      <div class="audio-controls">
+        <button id="musicToggleBtn" class="music-btn">🎵 Techno: OFF</button>
+        <label for="volumeSlider">VOL</label>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
+      </div>
+    </div>
 
-<div class="controls-top">
-  <button id="audio-toggle-btn" class="audio-btn">🔊 MUSIC: OFF</button>
-  <button id="prev-btn">◄ Voltar</button>
-  <button id="restart-btn">🔄 Reiniciar</button>
-  <button id="undo-btn">↩ Desfazer</button>
-  <button id="next-btn">Avançar ►</button>
-</div>
+    <div id="status" class="status-bar">Inicializando radares... Clique em uma coordenada inimiga.</div>
 
-<div id="viewport">
-  <div id="game-container"></div>
-</div>
+    <div class="boards">
+      <section class="boardbox player">
+        <h2>🟦 FROTA DO DJ MARCELO</h2>
+        <div class="grid-container">
+          <div></div>
+          <div class="labels-top" id="p-labels-top"></div>
+          <div class="labels-left" id="p-labels-left"></div>
+          <div class="board-wrapper">
+            <div id="p-overlay" class="ships-overlay"></div>
+            <div id="player" class="grid"></div>
+          </div>
+        </div>
+      </section>
 
-<div class="dpad">
-  <div></div>
-  <button onclick="move(0, -1)">▲</button>
-  <div></div>
-  <button onclick="move(-1, 0)">◄</button>
-  <button onclick="move(0, 1)">▼</button>
-  <button onclick="move(1, 0)">►</button>
+      <section class="boardbox enemy">
+        <h2>🟥 FROTA INIMIGA (IA)</h2>
+        <div class="grid-container">
+          <div></div>
+          <div class="labels-top" id="e-labels-top"></div>
+          <div class="labels-left" id="e-labels-left"></div>
+          <div class="board-wrapper">
+            <div id="e-overlay" class="ships-overlay"></div>
+            <div id="enemy" class="grid"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stats">
+      <span>SEUS NAVIOS: <b id="pShips" style="color: var(--cyan-glow);">5</b></span>
+      <span>NAVIOS IA: <b id="eShips" style="color: var(--red-neon);">5</b></span>
+    </div>
+  </div>
 </div>
 
 <script>
-let audioCtx = null;
-let isAudioPlaying = false;
-let musicInterval = null;
-let stepCounter = 0;
+class TechnoSynthesizer {
+  constructor() {
+    this.ctx = null;
+    this.isPlaying = false;
+    this.bpm = 132;
+    this.step = 0;
+    this.timer = null;
+    this.masterGain = null;
+    this.volume = 0.5;
 
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-}
-
-function playKick(time) {
-  let osc = audioCtx.createOscillator();
-  let gain = audioCtx.createGain();
-  osc.type = 'triangle';
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.frequency.setValueAtTime(150, time);
-  osc.frequency.exponentialRampToValueAtTime(30, time + 0.1);
-  gain.gain.setValueAtTime(0.4, time);
-  gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-  osc.start(time);
-  osc.stop(time + 0.1);
-}
-
-function playHiHat(time) {
-  let osc = audioCtx.createOscillator();
-  let gain = audioCtx.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(1200, time);
-  gain.gain.setValueAtTime(0.05, time);
-  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(time);
-  osc.stop(time + 0.04);
-}
-
-function playTone(time, freq, duration, waveType = 'square', volume = 0.15) {
-  if (!freq) return;
-  let osc = audioCtx.createOscillator();
-  let gain = audioCtx.createGain();
-  osc.type = waveType;
-  osc.frequency.setValueAtTime(freq, time);
-  gain.gain.setValueAtTime(volume, time);
-  gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(time);
-  osc.stop(time + duration);
-}
-
-function playSFX(type) {
-  if (!audioCtx) return;
-  let now = audioCtx.currentTime;
-  if (type === 'move') {
-    playTone(now, 220, 0.05, 'square', 0.1);
-  } else if (type === 'push') {
-    playTone(now, 110, 0.08, 'sawtooth', 0.2);
-  } else if (type === 'win') {
-    const notes = [261.63, 329.63, 392.00, 523.25];
-    notes.forEach((freq, idx) => {
-      playTone(now + idx * 0.08, freq, 0.1, 'square', 0.2);
-    });
-  }
-}
-
-function toggle16BitMusic() {
-  initAudio();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  isAudioPlaying = !isAudioPlaying;
-  const btn = document.getElementById("audio-toggle-btn");
-
-  if (isAudioPlaying) {
-    btn.textContent = "🔊 MUSIC: ON";
-    btn.classList.add("active");
-    const tempo = 60 / 140 / 4; 
-    const C3 = 130.81, E3 = 164.81, G3 = 196.00, A3 = 220.00, B3 = 246.94;
-    const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00, A4 = 440.00, B4 = 493.88, C5 = 523.25;
-
-    const leadNotes = [
-      E4, 0, G4, E4, D4, 0, C4, 0,  E4, 0, G4, A4, G4, 0, 0, 0,
-      E4, 0, G4, E4, D4, 0, C4, 0,  B3, C4, D4, E4, C4, 0, 0, 0
+    this.bassline = [
+      65.41, 65.41, 0, 65.41,
+      77.78, 65.41, 0, 65.41,
+      58.27, 65.41, 0, 65.41,
+      87.31, 77.78, 65.41, 58.27
     ];
-
-    const bassNotes = [
-      C3, C3, G3, C3, F3 = 174.61, F3, C3, F3,  C3, C3, G3, C3, G3, G3, D3 = 146.83, G3,
-      C3, C3, G3, C3, F3, F3, C3, F3,  G3, G3, G3, G3, C3, C3, C3, C3
-    ];
-
-    musicInterval = setInterval(() => {
-      let now = audioCtx.currentTime;
-      let step = stepCounter % 32;
-      if (step % 4 === 0) playKick(now);
-      if (step % 2 !== 0) playHiHat(now);
-      if (leadNotes[step]) playTone(now, leadNotes[step], 0.12, 'square', 0.12);
-      if (step % 2 === 0) playTone(now, bassNotes[step], 0.15, 'triangle', 0.25);
-      stepCounter++;
-    }, tempo * 1000);
-  } else {
-    btn.textContent = "🔊 MUSIC: OFF";
-    btn.classList.remove("active");
-    clearInterval(musicInterval);
   }
-}
 
-// --- LÓGICA DO SOKOBAN TOTALMENTE CORRIGIDA ---
-const TILE = { FLOOR: 0, WALL: 1, TARGET: 2, BOX: 3 };
-
-let currentLevelIndex = 1;
-let grid = [];
-let playerPos = { x: 0, y: 0 };
-let targets = [];
-let history = [];
-let steps = 0;
-
-function seededRandom(seed) {
-  let x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
-
-function generateLevel(levelNum) {
-  let seed = levelNum * 9973;
-  const rand = () => seededRandom(seed++);
-
-  const cols = Math.min(8 + Math.floor(levelNum / 100), 14);
-  const rows = Math.min(8 + Math.floor(levelNum / 100), 14);
-  const numBoxes = Math.min(2 + Math.floor(levelNum / 60), 6);
-
-  let map = Array.from({ length: rows }, () => Array(cols).fill(TILE.WALL));
-
-  // Gera sala interna limpa
-  for (let r = 1; r < rows - 1; r++) {
-    for (let c = 1; c < cols - 1; c++) {
-      if (rand() > 0.12 || (r === 1 || r === rows-2 || c === 1 || c === cols-2)) {
-        map[r][c] = TILE.FLOOR;
-      }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = this.volume;
+      this.masterGain.connect(this.ctx.destination);
     }
   }
 
-  // Identifica células do chão que não sejam cantos mortos (Deadlocks)
-  let validFloors = [];
-  for (let r = 2; r < rows - 2; r++) {
-    for (let c = 2; c < cols - 2; c++) {
-      if (map[r][c] === TILE.FLOOR) {
-        let wallUp = map[r-1][c] === TILE.WALL;
-        let wallDown = map[r+1][c] === TILE.WALL;
-        let wallLeft = map[r][c-1] === TILE.WALL;
-        let wallRight = map[r][c+1] === TILE.WALL;
+  setVolume(v) {
+    this.volume = v;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.05);
+    }
+  }
 
-        let isCorner = (wallUp && wallLeft) || (wallUp && wallRight) || (wallDown && wallLeft) || (wallDown && wallRight);
-        if (!isCorner) {
-          validFloors.push({ x: c, y: r });
+  start() {
+    this.init();
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    if (this.isPlaying) return;
+    this.isPlaying = true;
+    this.step = 0;
+
+    const stepDuration = (60 / this.bpm) / 4;
+    this.timer = setInterval(() => {
+      this.playStep();
+      this.step = (this.step + 1) % 16;
+    }, stepDuration * 1000);
+  }
+
+  stop() {
+    if (!this.isPlaying) return;
+    this.isPlaying = false;
+    clearInterval(this.timer);
+  }
+
+  toggle() {
+    if (this.isPlaying) {
+      this.stop();
+    } else {
+      this.start();
+    }
+    return this.isPlaying;
+  }
+
+  playStep() {
+    const time = this.ctx.currentTime;
+
+    if (this.step % 4 === 0) {
+      this.playKick(time);
+    }
+
+    if (this.step % 4 === 2) {
+      this.playHiHat(time);
+    }
+
+    const noteFreq = this.bassline[this.step];
+    if (noteFreq > 0) {
+      this.playBassNote(time, noteFreq);
+    }
+  }
+
+  playKick(time) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(140, time);
+    osc.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+
+    gain.gain.setValueAtTime(1.0, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.28);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(time);
+    osc.stop(time + 0.28);
+  }
+
+  playHiHat(time) {
+    const bufferSize = this.ctx.sampleRate * 0.08;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 7000;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.3, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+
+    whiteNoise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    whiteNoise.start(time);
+    whiteNoise.stop(time + 0.08);
+  }
+
+  playBassNote(time, freq) {
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, time);
+    filter.frequency.exponentialRampToValueAtTime(1800, time + 0.05);
+    filter.frequency.exponentialRampToValueAtTime(300, time + 0.15);
+    filter.Q.value = 5;
+
+    gain.gain.setValueAtTime(0.4, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(time);
+    osc.stop(time + 0.16);
+  }
+}
+
+const technoSynth = new TechnoSynthesizer();
+
+const N = 10;
+const cols = ["A","B","C","D","E","F","G","H","I","J"];
+
+const shipTypes = [
+  { id: 'carrier', len: 5, name: 'Porta-Aviões' },
+  { id: 'battleship', len: 4, name: 'Encouraçado' },
+  { id: 'cruiser', len: 3, name: 'Cruzador' },
+  { id: 'submarine', len: 3, name: 'Submarino' },
+  { id: 'destroyer', len: 2, name: 'Patrulha' }
+];
+
+let P, E, pShipsData = [], eShipsData = [], turn = true, over = false, mode = "hard", targetQueue = [];
+
+const playerEl = document.getElementById("player"), enemyEl = document.getElementById("enemy");
+const pOverlay = document.getElementById("p-overlay"), eOverlay = document.getElementById("e-overlay");
+const statusEl = document.getElementById("status");
+
+function setupLabels() {
+  const setup = (topId, leftId) => {
+    const top = document.getElementById(topId);
+    const left = document.getElementById(leftId);
+    top.innerHTML = ""; left.innerHTML = "";
+    cols.forEach(c => top.innerHTML += `<span>${c}</span>`);
+    for(let i=1; i<=10; i++) left.innerHTML += `<span>${i}</span>`;
+  };
+  setup("p-labels-top", "p-labels-left");
+  setup("e-labels-top", "e-labels-left");
+}
+
+function getShipSVG(type) {
+  const SVGs = {
+    carrier: `<svg viewBox="0 0 500 100" width="100%" height="100%"><path d="M10,20 L430,10 L490,50 L430,90 L10,80 Z" fill="#4a5568" stroke="#cbd5e1" stroke-width="4"/><rect x="40" y="25" width="360" height="50" fill="#334155" stroke="#94a3b8" stroke-width="2"/><line x1="50" y1="50" x2="380" y2="50" stroke="#f1f5f9" stroke-width="3" stroke-dasharray="12,12"/><polygon points="120,30 135,45 110,45" fill="#00f0ff"/><polygon points="220,30 235,45 210,45" fill="#00f0ff"/><polygon points="160,58 175,73 150,73" fill="#00f0ff"/><circle cx="440" cy="50" r="12" fill="#64748b"/></svg>`,
+    battleship: `<svg viewBox="0 0 400 100" width="100%" height="100%"><path d="M5,50 Q40,20 100,20 L320,25 Q380,35 395,50 Q380,65 320,75 L100,80 Q40,80 5,50 Z" fill="#52606d" stroke="#cbd5e1" stroke-width="4"/><circle cx="90" cy="50" r="14" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/><circle cx="160" cy="50" r="16" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/><rect x="210" y="35" width="60" height="30" rx="5" fill="#334155" stroke="#cbd5e1"/><circle cx="310" cy="50" r="14" fill="#1e293b" stroke="#94a3b8" stroke-width="3"/></svg>`,
+    cruiser: `<svg viewBox="0 0 300 100" width="100%" height="100%"><path d="M10,50 Q50,25 120,25 L240,30 Q290,40 295,50 Q290,60 240,70 L120,75 Q50,75 10,50 Z" fill="#475569" stroke="#94a3b8" stroke-width="4"/><circle cx="80" cy="50" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/><rect x="130" y="38" width="45" height="24" fill="#1e293b"/><circle cx="210" cy="50" r="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/></svg>`,
+    submarine: `<svg viewBox="0 0 300 100" width="100%" height="100%"><path d="M20,50 Q50,30 150,30 Q250,30 285,50 Q250,70 150,70 Q50,70 20,50 Z" fill="#334155" stroke="#64748b" stroke-width="4"/><rect x="120" y="38" width="50" height="24" rx="12" fill="#0f172a" stroke="#94a3b8" stroke-width="2"/><circle cx="60" cy="50" r="6" fill="#00f0ff"/><circle cx="240" cy="50" r="6" fill="#00f0ff"/></svg>`,
+    destroyer: `<svg viewBox="0 0 200 100" width="100%" height="100%"><path d="M10,50 Q40,30 100,30 L160,35 Q195,45 198,50 Q195,55 160,65 L100,70 Q40,70 10,50 Z" fill="#64748b" stroke="#cbd5e1" stroke-width="3"/><circle cx="60" cy="50" r="10" fill="#1e293b"/><rect x="100" y="40" width="30" height="20" fill="#334155"/></svg>`
+  };
+  return SVGs[type] || '';
+}
+
+function empty(){ return Array.from({length:N}, ()=>Array(N).fill(0)); }
+
+function canPlace(b, r, c, len, hor) {
+  for(let k=0; k<len; k++) {
+    let y = r + (hor ? 0 : k), x = c + (hor ? k : 0);
+    if(y >= N || x >= N || b[y][x]) return false;
+  }
+  for(let y = Math.max(0, r-1); y <= Math.min(N-1, r+(hor?1:len)); y++)
+    for(let x = Math.max(0, c-1); x <= Math.min(N-1, c+(hor?len:1)); x++)
+      if(b[y][x]) return false;
+  return true;
+}
+
+function placeFleet(b) {
+  let shipsData = [];
+  for(const ship of shipTypes) {
+    let ok = false;
+    while(!ok) {
+      let hor = Math.random() < 0.5, r = Math.floor(Math.random()*N), c = Math.floor(Math.random()*N);
+      if(canPlace(b, r, c, ship.len, hor)) {
+        for(let k=0; k<ship.len; k++) {
+          let y = r + (hor ? 0 : k), x = c + (hor ? k : 0);
+          b[y][x] = 1;
         }
+        shipsData.push({ ...ship, r, c, hor, sunk: false });
+        ok = true;
       }
     }
   }
-
-  validFloors.sort(() => rand() - 0.5);
-
-  let levelTargets = [];
-  let boxPositions = [];
-  const totalItems = Math.min(numBoxes, validFloors.length);
-
-  // Alvos são definidos primeiro
-  for (let i = 0; i < totalItems; i++) {
-    levelTargets.push({ x: validFloors[i].x, y: validFloors[i].y });
-    boxPositions.push({ x: validFloors[i].x, y: validFloors[i].y });
-  }
-
-  let pPos = { x: levelTargets[0].x, y: levelTargets[0].y };
-
-  const moves = [{x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}];
-  const shuffleSteps = 60 + levelNum * 3;
-
-  // Embaralhamento reverso para distanciar caixas dos alvos sem travá-las
-  for (let i = 0; i < shuffleSteps; i++) {
-    let dir = moves[Math.floor(rand() * 4)];
-    let boxIdx = Math.floor(rand() * boxPositions.length);
-    let b = boxPositions[boxIdx];
-
-    let pullPlayerTarget = { x: b.x + dir.x, y: b.y + dir.y };
-    let pullBoxTarget = { x: b.x + dir.x * 2, y: b.y + dir.y * 2 };
-
-    if (
-      pullPlayerTarget.x > 0 && pullPlayerTarget.x < cols - 1 &&
-      pullPlayerTarget.y > 0 && pullPlayerTarget.y < rows - 1 &&
-      pullBoxTarget.x > 0 && pullBoxTarget.x < cols - 1 &&
-      pullBoxTarget.y > 0 && pullBoxTarget.y < rows - 1 &&
-      map[pullPlayerTarget.y][pullPlayerTarget.x] === TILE.FLOOR &&
-      map[pullBoxTarget.y][pullBoxTarget.x] === TILE.FLOOR &&
-      !boxPositions.some(other => (other.x === pullPlayerTarget.x && other.y === pullPlayerTarget.y) || (other.x === pullBoxTarget.x && other.y === pullBoxTarget.y))
-    ) {
-      b.x = pullPlayerTarget.x;
-      b.y = pullPlayerTarget.y;
-      pPos = { x: pullBoxTarget.x, y: pullBoxTarget.y };
-    }
-  }
-
-  // Garantia Rígida 1: Mover qualquer caixa que tenha ficado sobre o alvo
-  boxPositions.forEach(b => {
-    if (levelTargets.some(t => t.x === b.x && t.y === b.y)) {
-      let candidate = validFloors.find(f => 
-        !levelTargets.some(t => t.x === f.x && t.y === f.y) &&
-        !boxPositions.some(other => other.x === f.x && other.y === f.y) &&
-        (f.x !== pPos.x || f.y !== pPos.y)
-      );
-      if (candidate) {
-        b.x = candidate.x;
-        b.y = candidate.y;
-      }
-    }
-  });
-
-  // Garantia Rígida 2: Evitar canto morto na posição final gerada
-  boxPositions.forEach(b => {
-    let wU = map[b.y-1][b.x] === TILE.WALL;
-    let wD = map[b.y+1][b.x] === TILE.WALL;
-    let wL = map[b.y][b.x-1] === TILE.WALL;
-    let wR = map[b.y][b.x+1] === TILE.WALL;
-
-    if ((wU && wL) || (wU && wR) || (wD && wL) || (wD && wR)) {
-      let openCell = validFloors.find(f => 
-        !levelTargets.some(t => t.x === f.x && t.y === f.y) &&
-        !boxPositions.some(other => other.x === f.x && other.y === f.y) &&
-        (f.x !== pPos.x || f.y !== pPos.y)
-      );
-      if (openCell) {
-        b.x = openCell.x;
-        b.y = openCell.y;
-      }
-    }
-  });
-
-  boxPositions.forEach(b => { map[b.y][b.x] = TILE.BOX; });
-
-  return { map, playerPos: pPos, targets: levelTargets };
+  return shipsData;
 }
 
-function loadLevel(levelNum) {
-  if (levelNum < 1) levelNum = 1;
-  if (levelNum > 10000) levelNum = 10000;
-
-  currentLevelIndex = levelNum;
-  document.getElementById("level-input").value = levelNum;
-
-  const levelData = generateLevel(levelNum);
-  grid = levelData.map;
-  playerPos = levelData.playerPos;
-  targets = levelData.targets;
-  history = [];
-  steps = 0;
-
+function reset() {
+  P = empty(); E = empty();
+  pShipsData = placeFleet(P);
+  eShipsData = placeFleet(E);
+  turn = true; over = false; targetQueue = [];
   render();
+  statusEl.textContent = "Sua vez! Selecione um alvo nas coordenadas inimigas.";
 }
 
 function render() {
-  const container = document.getElementById("game-container");
-  container.innerHTML = "";
-  
-  const rows = grid.length;
-  const cols = grid[0].length;
+  drawGrid(playerEl, P, true);
+  drawGrid(enemyEl, E, false);
+  renderOverlay(pOverlay, pShipsData, true);
+  renderOverlay(eOverlay, eShipsData, false);
+  document.getElementById("pShips").textContent = pShipsData.filter(s => !s.sunk).length;
+  document.getElementById("eShips").textContent = eShipsData.filter(s => !s.sunk).length;
+}
 
-  container.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
-  container.style.gridTemplateRows = `repeat(${rows}, 36px)`;
-
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-
-      const isTarget = targets.some(t => t.x === x && t.y === y);
-      const isPlayer = playerPos.x === x && playerPos.y === y;
-      const tileVal = grid[y][x];
-
-      if (tileVal === TILE.WALL) {
-        cell.classList.add("wall");
-      } else if (tileVal === TILE.BOX) {
-        cell.classList.add(isTarget ? "box-ok" : "box");
-      } else if (isPlayer) {
-        cell.classList.add("player");
-      } else if (isTarget) {
-        cell.classList.add("target");
-      } else {
-        cell.classList.add("floor");
-      }
-
-      container.appendChild(cell);
+function drawGrid(el, b, isPlayer) {
+  el.innerHTML = "";
+  for(let r=0; r<N; r++) {
+    for(let c=0; c<N; c++) {
+      const d = document.createElement("div");
+      d.className = "cell";
+      const v = b[r][c];
+      if(v === 2) d.classList.add("miss");
+      if(v === 3) d.classList.add("hit");
+      if(!isPlayer) d.onclick = () => attackPlayer(r, c);
+      el.appendChild(d);
     }
   }
-
-  document.getElementById("steps-display").textContent = steps;
 }
 
-function move(dx, dy) {
-  const newX = playerPos.x + dx;
-  const newY = playerPos.y + dy;
+function renderOverlay(overlayEl, shipsData, isPlayer) {
+  overlayEl.innerHTML = "";
+  const step = 10;
+  
+  shipsData.forEach(s => {
+    if(!isPlayer && !s.sunk) return;
 
-  if (grid[newY][newX] === TILE.WALL) return;
+    const shipDiv = document.createElement("div");
+    shipDiv.className = "rendered-ship";
+    shipDiv.innerHTML = getShipSVG(s.id);
 
-  if (grid[newY][newX] === TILE.BOX) {
-    const boxNewX = newX + dx;
-    const boxNewY = newY + dy;
+    const width = s.hor ? s.len * step : step;
+    const height = s.hor ? step : s.len * step;
+    
+    shipDiv.style.width = `${width}%`;
+    shipDiv.style.height = `${height}%`;
+    shipDiv.style.left = `${s.c * step}%`;
+    shipDiv.style.top = `${s.r * step}%`;
+    
+    if(!s.hor) {
+      shipDiv.style.transformOrigin = "top left";
+      shipDiv.style.transform = `rotate(90deg) translateY(-100%)`;
+      shipDiv.style.width = `${s.len * step}%`;
+      shipDiv.style.height = `${step}%`;
+    }
 
-    if (grid[boxNewY][boxNewX] === TILE.WALL || grid[boxNewY][boxNewX] === TILE.BOX) return;
+    if(s.sunk) shipDiv.style.filter = "grayscale(100%) drop-shadow(0 0 8px #ff0055)";
 
-    saveHistory();
-
-    grid[newY][newX] = TILE.FLOOR;
-    grid[boxNewY][boxNewX] = TILE.BOX;
-    playerPos = { x: newX, y: newY };
-    steps++;
-    playSFX('push');
-  } else {
-    saveHistory();
-    playerPos = { x: newX, y: newY };
-    steps++;
-    playSFX('move');
-  }
-
-  render();
-  checkWin();
-}
-
-function saveHistory() {
-  history.push({
-    grid: JSON.parse(JSON.stringify(grid)),
-    playerPos: { ...playerPos },
-    steps
+    overlayEl.appendChild(shipDiv);
   });
 }
 
-function undo() {
-  if (history.length === 0) return;
-  const lastState = history.pop();
-  grid = lastState.grid;
-  playerPos = lastState.playerPos;
-  steps = lastState.steps;
-  render();
+function updateSunkState(b, shipsData) {
+  shipsData.forEach(s => {
+    let hits = 0;
+    for(let k=0; k<s.len; k++) {
+      let y = s.r + (s.hor ? 0 : k), x = s.c + (s.hor ? k : 0);
+      if(b[y][x] === 3) hits++;
+    }
+    if(hits === s.len) s.sunk = true;
+  });
 }
 
-function checkWin() {
-  if (targets.length === 0) return;
-  const allTargetsCovered = targets.every(t => grid[t.y][t.x] === TILE.BOX);
+function attackPlayer(r, c) {
+  if(over || !turn || E[r][c] >= 2) return;
+  E[r][c] = E[r][c] === 1 ? 3 : 2;
+  updateSunkState(E, eShipsData);
+  const posStr = `${cols[c]}${r+1}`;
   
-  if (allTargetsCovered) {
-    playSFX('win');
-    setTimeout(() => {
-      alert(`⚡ FASE ${currentLevelIndex} CONCLUÍDA!`);
-      loadLevel(currentLevelIndex + 1);
-    }, 150);
+  if(E[r][c] === 3) {
+    statusEl.textContent = `💥 ALVO ATINGIDO em ${posStr}! Você ganhou outra jogada.`;
+    render(); checkEnd(); return;
+  }
+  
+  turn = false; render();
+  statusEl.textContent = `🌊 Disparo em ${posStr} deu na água. A IA está calculando rota...`;
+  setTimeout(aiTurn, 600);
+  checkEnd();
+}
+
+function aiTurn() {
+  if(over) return;
+  let r, c;
+  if(mode === "hard" && targetQueue.length) {
+    [r,c] = targetQueue.shift();
+    if(P[r][c] >= 2) { aiTurn(); return; }
+  } else {
+    do {
+      r = Math.floor(Math.random()*N);
+      c = Math.floor(Math.random()*N);
+    } while(P[r][c] >= 2);
+  }
+
+  const posStr = `${cols[c]}${r+1}`;
+
+  if(P[r][c] === 1) {
+    P[r][c] = 3;
+    if(mode === "hard") {
+      for(const [dy,dx] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        let y = r+dy, x = c+dx;
+        if(y>=0 && y<N && x>=0 && x<N && P[y][x] < 2) targetQueue.push([y,x]);
+      }
+    }
+    updateSunkState(P, pShipsData);
+    statusEl.textContent = `⚠️ ALERTA: A IA atingiu sua frota em ${posStr}! Ela joga novamente.`;
+    render(); checkEnd();
+    if(!over) setTimeout(aiTurn, 600);
+  } else {
+    P[r][c] = 2; turn = true; render();
+    statusEl.textContent = `🛡️ A IA disparou em ${posStr} e errou. Sua vez!`;
+    checkEnd();
   }
 }
 
-window.addEventListener("keydown", (e) => {
-  switch (e.key) {
-    case "ArrowUp": case "w": case "W": move(0, -1); break;
-    case "ArrowDown": case "s": case "S": move(0, 1); break;
-    case "ArrowLeft": case "a": case "A": move(-1, 0); break;
-    case "ArrowRight": case "d": case "D": move(1, 0); break;
-    case "r": case "R": loadLevel(currentLevelIndex); break;
-    case "z": case "Z": undo(); break;
+function checkEnd() {
+  if(!P.flat().includes(1)) {
+    over = true;
+    statusEl.textContent = "☠️ DERROTA TÁTICA! A IA destruiu sua frota. Reinicie para revanche.";
+    render();
+  } else if(!E.flat().includes(1)) {
+    over = true;
+    statusEl.textContent = "🏆 VITÓRIA ABSOLUTA! DJ MARCELO DOMINOU OS MARES!";
+    render();
   }
-});
+}
 
-document.getElementById("audio-toggle-btn").onclick = toggle16BitMusic;
-document.getElementById("restart-btn").onclick = () => loadLevel(currentLevelIndex);
-document.getElementById("undo-btn").onclick = undo;
-document.getElementById("prev-btn").onclick = () => loadLevel(currentLevelIndex - 1);
-document.getElementById("next-btn").onclick = () => loadLevel(currentLevelIndex + 1);
-document.getElementById("level-input").onchange = (e) => loadLevel(parseInt(e.target.value) || 1);
+document.getElementById("newBtn").onclick = reset;
+document.getElementById("easyBtn").onclick = () => {
+  mode = "easy";
+  document.getElementById("easyBtn").classList.add("active");
+  document.getElementById("hardBtn").classList.remove("active");
+  reset();
+};
+document.getElementById("hardBtn").onclick = () => {
+  mode = "hard";
+  document.getElementById("hardBtn").classList.add("active");
+  document.getElementById("easyBtn").classList.remove("active");
+  reset();
+};
 
-loadLevel(1);
+const musicToggleBtn = document.getElementById("musicToggleBtn");
+musicToggleBtn.onclick = () => {
+  const isPlaying = technoSynth.toggle();
+  musicToggleBtn.textContent = isPlaying ? "🎵 Techno: ON" : "🎵 Techno: OFF";
+  if (isPlaying) {
+    musicToggleBtn.classList.add("active");
+  } else {
+    musicToggleBtn.classList.remove("active");
+  }
+};
+
+document.getElementById("volumeSlider").oninput = (e) => {
+  technoSynth.setVolume(parseFloat(e.target.value));
+};
+
+setupLabels();
+reset();
 </script>
 </body>
 </html>
